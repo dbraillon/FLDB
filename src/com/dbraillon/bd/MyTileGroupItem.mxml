@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 currentState="normal"
+		 width="64" height="64"
+		 mouseOver="myTileGroupItem_mouseOverHandler(event)"
+		 mouseOut="myTileGroupItem_mouseOutHandler(event)">
+	
+	<fx:Declarations>
+		<!-- Placer ici les éléments non visuels (services et objets de valeur, par exemple). -->
+	</fx:Declarations>
+	
+	<s:states>
+		<s:State name="normal" />
+		<s:State name="over" />
+		<s:State name="selected" />
+	</s:states>
+	
+	<s:Rect height="100%" width="100%" depth="2" includeIn="over, selected">
+		<s:fill>
+			<s:SolidColor color="0x99ccff" alpha.over=".3" alpha.selected=".6" />
+		</s:fill>
+	</s:Rect>
+	
+	<s:VGroup id="content" height="100%" width="100%" gap="5" depth="1"
+			  paddingBottom="2" paddingLeft="2" paddingRight="2" paddingTop="2"
+			  verticalAlign="middle" horizontalAlign="center">
+		
+		<s:Image height="75%" width="75%" source="{source}" />
+		<s:Label height="25%" width="75%" text="{label}" 
+				 textAlign="center" maxDisplayedLines="-1" />
+		
+	</s:VGroup>
+	
+	<fx:Script>
+		<![CDATA[
+			
+			private var _source:String;
+			private var _label:String;
+			private var _provider:Object;
+			
+			protected function myTileGroupItem_mouseOverHandler(event:MouseEvent):void
+			{
+				if(currentState == "normal")
+				{
+					currentState = "over";
+				}
+			}
+			
+			protected function myTileGroupItem_mouseOutHandler(event:MouseEvent):void
+			{
+				if(currentState == "over")
+				{
+					currentState = "normal";
+				}
+			}
+			
+			public override function set height(value:Number):void
+			{
+				if(value < 64)
+				{
+					return;
+					//throw new Error("You can't give a height less than 64.");
+				}
+				
+				super.height = value;
+			}
+			
+			public override function set width(value:Number):void
+			{
+				if(value < 64)
+				{
+					return;
+					//throw new Error("You can't give a width less than 64.");
+				}
+				
+				super.width = value;
+			}
+			
+			public override function setFocus():void
+			{
+				super.setFocus();
+				
+				if(currentState == "normal")
+				{
+					currentState = "over";
+				}
+			}
+			
+			public function looseFocus():void
+			{
+				if(currentState == "over")
+				{
+					currentState = "normal";
+				}
+			}
+			
+			public function select():void
+			{
+				currentState = "selected";
+			}
+			
+			public function deselect():void
+			{
+				currentState = "normal";
+			}
+
+			[Inspectable]
+			public function set source(value:String):void
+			{
+				_source = value;
+			}
+
+			[Inspectable]
+			public function set label(value:String):void
+			{
+				_label = value;
+			}
+
+			[Bindable]
+			public function get source():String
+			{
+				return _source;
+			}
+
+			[Bindable]
+			public function get label():String
+			{
+				return _label;
+			}
+
+			[Bindable]
+			public function get provider():Object
+			{
+				return _provider;
+			}
+
+			public function set provider(value:Object):void
+			{
+				_provider = value;
+			}
+
+			
+		]]>
+	</fx:Script>
+	
+</s:Group>
