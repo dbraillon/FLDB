@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:bd="com.dbraillon.bd.*" width="400" height="300">
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.collections.HierarchicalData;
+			
+			
+			private var _dataProvider:Object;
+			private var _sourceFunction:Function;
+			
+			[Bindable]
+			public function get dataProvider():Object
+			{
+				return _dataProvider;
+			}
+			[Inspectable]
+			public function set dataProvider(value:Object):void
+			{
+				_dataProvider = value;
+			}
+
+			[Bindable]
+			public function get sourceFunction():Function
+			{
+				return _sourceFunction;
+			}
+			[Inspectable]
+			public function set sourceFunction(value:Function):void
+			{
+				_sourceFunction = value;
+			}
+			
+			protected function myAdvancedDataGrid_selectedIndexChange():void
+			{
+				if(myAdvancedDataGrid.selectedItem)
+				{
+					trace("+ myAdvancedDataGrid_selectedIndexChange");
+					
+					var selectedItem:Object = myAdvancedDataGrid.selectedItem;
+					
+					var children:Array = selectedItem.children;
+					var files:Array = selectedItem.files;
+					var concat:Array = new Array();
+					
+					if(children.length > 0)
+					{
+						concat = children;
+					}
+					
+					if(files.length > 0)
+					{
+						concat = concat.concat(files);
+					}
+					
+					myTileGroup.dataProvider = concat;
+					callLater(myAdvancedDataGrid.expandItem, [selectedItem, true]);
+				}
+			}
+			
+			protected function myAdvancedDataGrid_activateHandler(event:Event):void
+			{
+				trace("lol");
+			}
+			
+		]]>
+	</fx:Script>
+	
+	<s:VGroup height="100%" width="100%">
+		
+		<bd:MyButtonBar height="50" width="100%" />
+		
+		<s:HGroup height="100%" width="100%">
+			
+			<mx:AdvancedDataGrid id="myAdvancedDataGrid" height="100%" width="30%" 
+								   dataProvider="{new HierarchicalData(dataProvider)}"
+								   change="myAdvancedDataGrid_selectedIndexChange()"
+								   valueCommit="myAdvancedDataGrid_selectedIndexChange()"
+								   deactivate="myAdvancedDataGrid_activateHandler(event)"
+								   selectedIndex="0">
+				
+				<mx:columns>
+					<mx:AdvancedDataGridColumn dataField="name" headerText="Arbre" />
+				</mx:columns>
+				
+				<mx:rendererProviders>
+					<mx:AdvancedDataGridRendererProvider dataField="name" 
+														 columnIndex="0"
+														 columnSpan="0">
+						
+						<mx:renderer>
+							
+							<fx:Component>
+								
+								<mx:AdvancedDataGridGroupItemRenderer 
+									mouseOver="advanceddatagridgroupitemrenderer1_mouseOverHandler(event)"
+									dragEnter="advanceddatagridgroupitemrenderer1_dragEnterHandler(event)"
+									dragDrop="advanceddatagridgroupitemrenderer1_dragDropHandler(event)">
+									
+									<fx:Script>
+										<![CDATA[
+											import mx.controls.AdvancedDataGridBaseEx;
+											import mx.events.DragEvent;
+											import mx.managers.DragManager;
+											
+											protected function advanceddatagridgroupitemrenderer1_mouseOverHandler(event:MouseEvent):void
+											{
+												
+											}
+											
+											protected function advanceddatagridgroupitemrenderer1_dragEnterHandler(event:DragEvent):void
+											{
+												if((event.dragInitiator as Object).provider.path != data.path)
+												{
+													DragManager.acceptDragDrop(this);
+													event.preventDefault();
+												}
+											}
+											
+											protected function advanceddatagridgroupitemrenderer1_dragDropHandler(event:DragEvent):void
+											{
+												trace("from: " + (event.dragInitiator as Object).provider.path + " to: " + data.path);
+												parent.parent.parent.dispatchEvent(new Event(Event.DEACTIVATE));
+											}
+											
+										]]>
+									</fx:Script>
+								</mx:AdvancedDataGridGroupItemRenderer>
+								
+							</fx:Component>
+						</mx:renderer>
+						
+					</mx:AdvancedDataGridRendererProvider>
+				</mx:rendererProviders>
+				
+			</mx:AdvancedDataGrid>
+			
+			<bd:MyTileGroup id="myTileGroup" height="100%" width="70%"
+							labelField="name" sourceField="type" sourceFunction="{sourceFunction}"
+							childHeight="128" childWidth="128" />
+			
+		</s:HGroup>
+		
+	</s:VGroup>
+	
+</s:Group>

@@ -140,7 +140,6 @@
 			{
 				_provider = value;
 			}
-
 			
 		]]>
 	</fx:Script>

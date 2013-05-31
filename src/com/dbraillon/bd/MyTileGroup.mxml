@@ -15,17 +15,18 @@
 	
 	<fx:Script>
 		<![CDATA[
-			import mx.collections.IList;
 			import mx.core.DragSource;
 			import mx.core.IVisualElement;
 			import mx.core.UIComponent;
 			import mx.events.DragEvent;
 			import mx.managers.DragManager;
+			import mx.utils.ArrayUtil;
+			import mx.utils.ObjectUtil;
 			
 			import spark.components.Group;
 			
 			
-			private var _dataProvider:IList;
+			private var _dataProvider:Object;
 			private var _selectedItem:Object;
 			
 			private var _labelField:String;
@@ -41,6 +42,7 @@
 				element.addEventListener(DragEvent.DRAG_ENTER, childDragEnter);
 				element.addEventListener(DragEvent.DRAG_EXIT, childDragExit);
 				element.addEventListener(DragEvent.DRAG_DROP, childDrop);
+				element.addEventListener("rightMouseDown", childRightMouseDown);
 			}
 			
 			public override function addElement(element:IVisualElement):IVisualElement
@@ -71,14 +73,14 @@
 			}
 			
 			[Inspectable]
-			public function set dataProvider(list:IList):void
+			public function set dataProvider(list:Object):void
 			{
 				_dataProvider = list;
 				
 				removeAllElements();
 				selectedItem = null;
 				
-				for each(var item:Object in list.toArray())
+				for each(var item:Object in ArrayUtil.toArray(list))
 				{
 					var source:String;
 					if(sourceFunction != null)
@@ -157,9 +159,14 @@
 				}
 			}
 			
+			private function childRightMouseDown(event:MouseEvent):void
+			{
+				
+			}
+			
 			
 			[Bindable]
-			public function get dataProvider():IList
+			public function get dataProvider():Object
 			{
 				return _dataProvider;
 			}
@@ -223,8 +230,7 @@
 			{
 				_sourceFunction = value;
 			}
-
-
+			
 		]]>
 	</fx:Script>
 	

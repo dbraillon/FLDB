@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
-  <includeClasses/>
+  <includeClasses>
+    <classEntry path="com.dbraillon.bd.MyAdvancedDataGrid"/>
+    <classEntry path="com.dbraillon.bd.MyExplorer"/>
+    <classEntry path="com.dbraillon.bd.MyButtonBar"/>
+    <classEntry path="com.dbraillon.bd.MyAdvancedDataGridEvent"/>
+    <classEntry path="com.dbraillon.bd.MyRenderer"/>
+  </includeClasses>
   <includeResources/>
   <namespaceManifests/>
 </flexLibProperties>
