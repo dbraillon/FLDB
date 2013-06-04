@@ -4,6 +4,7 @@
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
 		 currentState="normal"
 		 width="64" height="64"
+		 doubleClickEnabled="true"
 		 mouseOver="myTileGroupItem_mouseOverHandler(event)"
 		 mouseOut="myTileGroupItem_mouseOutHandler(event)">
 	

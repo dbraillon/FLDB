@@ -1,19 +1,22 @@
-package com.dbraillon.bd
+package com.dbraillon.my.myInputPopup
 {
 	import flash.events.Event;
 	
-	public class MyAdvancedDataGridEvent extends Event
+	public class MyInputPopupEvent extends Event
 	{
-		public static const MYCHANGE : String = "myChange";
+		public static const RESULT : String = "myInputPopupResult";
+		public static const CANCEL : String = "myInputPopupCancel";
+		
 		
 		private var _data:Object;
 		
-		public function MyAdvancedDataGridEvent(type:String, data:Object, bubbles:Boolean=false, cancelable:Boolean=false)
+		public function MyInputPopupEvent(type:String, data:Object, bubbles:Boolean=false, cancelable:Boolean=false)
 		{
 			super(type, bubbles, cancelable);
 			this.data = data;
 		}
 
+		
 		public function get data():Object
 		{
 			if(!_data)
@@ -28,6 +31,5 @@ package com.dbraillon.bd
 		{
 			_data = value;
 		}
-
 	}
 }

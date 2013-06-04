@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:AdvancedDataGrid xmlns:fx="http://ns.adobe.com/mxml/2009" 
+					 xmlns:s="library://ns.adobe.com/flex/spark" 
+					 xmlns:mx="library://ns.adobe.com/flex/mx"
+					 creationComplete="myTreeGroup_creationCompleteHandler(event)">
+	
+	<!-- Provider MUST :
+			- has a 'label' property (or the property give by dataField)
+			- has a 'id' property (or the property give by idField )
+	
+		 DragedItem MUST :
+			- has a valid draggedItem
+			- has a 'label' and 'id' properties
+			  OR
+			  defines a custom compare method
+			 
+	-->
+	
+	<fx:Metadata>
+		[Event(name="myTreeGroupDragDrop", type="com.dbraillon.my.myTreeGroup.MyTreeGroupEvent")]
+	</fx:Metadata>
+	
+	<mx:rendererProviders>
+		<mx:AdvancedDataGridRendererProvider dataField="{dataField}"
+											 columnIndex="0"
+											 columnSpan="0">
+			<mx:renderer>
+				<fx:Component>
+					<mx:AdvancedDataGridGroupItemRenderer
+						dragEnter="item_dragEnterHandler(event)"
+						dragDrop="item_dragDropHandler(event)">
+						
+						<fx:Script>
+							<![CDATA[
+								import com.dbraillon.my.myTreeGroup.MyTreeGroupEvent;
+								
+								import mx.events.DragEvent;
+								import mx.managers.DragManager;
+								
+								
+								protected function item_dragEnterHandler(event:DragEvent):void
+								{
+									var data:Object = new Object();
+									data.from = event.draggedItem;
+									data.to = data;
+									data.callBack = callBack_dragEnterHandler;
+									
+									var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.INNER_DRAG_ENTER, data);
+									parent.parent.parent.dispatchEvent(myEvent);
+								}
+								
+								private function callBack_dragEnterHandler():void
+								{
+									DragManager.acceptDragDrop(this);
+									//event.preventDefault();
+								}
+								
+								protected function item_dragDropHandler(event:DragEvent):void
+								{
+									var data:Object = new Object();
+									data.from = event.draggedItem;
+									data.to = data;
+									data.callBack = callBack_dragEnterHandler;
+									
+									var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.INNER_DRAG_DROP, data);
+									parent.parent.parent.dispatchEvent(myEvent);
+								}
+								
+							]]>
+						</fx:Script>
+						
+					</mx:AdvancedDataGridGroupItemRenderer>
+				</fx:Component>
+			</mx:renderer>
+		</mx:AdvancedDataGridRendererProvider>
+	</mx:rendererProviders>
+	
+	<mx:columns>
+		<mx:AdvancedDataGridColumn dataField="{dataField}" headerText="{dataHeaderField}" />
+	</mx:columns>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			private var _dataHeaderField:String;
+			private var _dataField:String;
+			private var _idField:String;
+			private var _dragEnterCompare:Function;
+			
+			/* Register listeners */
+			protected function myTreeGroup_creationCompleteHandler(event:FlexEvent):void
+			{
+				addEventListener(MyTreeGroupEvent.INNER_DRAG_ENTER, item_dragEnterHandler);
+				addEventListener(MyTreeGroupEvent.INNER_DRAG_DROP, item_dragDropHandler);
+			}
+			
+			/* Get the compare method and launch it */
+			protected function item_dragEnterHandler(event:MyTreeGroupEvent):void
+			{
+				if(!dragEnterCompare.call(null, event.data.from, event.data.to))
+				{
+					// If the id is different callBack to accept the drag
+					event.data.callBack.call();
+				}
+			}
+			
+			/* Let parent receive the event and do stuff with the dropped object */
+			protected function item_dragDropHandler(event:MyTreeGroupEvent):void
+			{
+				var data:Object = new Object();
+				data.from = event.data.from;
+				data.to = event.data.to;
+				
+				var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.DRAG_DROP, data);
+				dispatchEvent(myEvent);
+			}
+			
+			/* Basic myTreeGroup compare function */
+			private function myDragEnterCompare(fromObject:Object, toObject:Object):Boolean
+			{
+				if(!fromObject.hasOwnProperty("id") || !toObject.hasOwnProperty(idField))
+				{
+					return false;
+				}
+				
+				if(fromObject["id"] == toObject[idField])
+				{
+					return true;
+				}
+				
+				return false;
+			}
+			
+			/* When dataprovider is given, select the first item */
+			public override function set dataProvider(value:Object):void
+			{
+				super.dataProvider = value;
+				selectedIndex = 0;
+			}
+
+			
+			[Bindable]
+			public function get dataField():String
+			{
+				if(!_dataField)
+				{
+					_dataField = "label";
+				}
+				
+				return _dataField;
+			}
+
+			[Inspectable]
+			public function set dataField(value:String):void
+			{
+				_dataField = value;
+			}
+
+			[Bindable]
+			public function get idField():String
+			{
+				return _idField;
+			}
+
+			[Inspectable]
+			public function set idField(value:String):void
+			{
+				_idField = value;
+			}
+
+			[Bindable]
+			public function get dragEnterCompare():Function
+			{
+				if(_dragEnterCompare == null)
+				{
+					_dragEnterCompare = myDragEnterCompare;
+				}
+				
+				return _dragEnterCompare;
+			}
+
+			[Inspectable]
+			public function set dragEnterCompare(value:Function):void
+			{
+				_dragEnterCompare = value;
+			}
+
+			[Bindable]
+			public function get dataHeaderField():String
+			{
+				return _dataHeaderField;
+			}
+
+			[Inspectable]
+			public function set dataHeaderField(value:String):void
+			{
+				_dataHeaderField = value;
+			}
+			
+		]]>
+	</fx:Script>
+	
+</mx:AdvancedDataGrid>

@@ -1,0 +1,707 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 xmlns:components="com.dbraillon.my.myExplorer.components.*" 
+		 width="400" height="300"
+		 creationComplete="buildContextMenu()" xmlns:myButtonBar="com.dbraillon.my.myButtonBar.*" xmlns:myTreeGroup="com.dbraillon.my.myTreeGroup.*" >
+	
+	<fx:Metadata>
+		
+		[Event(name="sendFile", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
+		[Event(name="createFolder", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
+		[Event(name="rename", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
+		[Event(name="delete", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
+		[Event(name="moveItem", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
+		
+	</fx:Metadata>
+	
+	<s:VGroup height="100%" width="100%">
+		
+		<s:HGroup width="100%">
+		
+			<s:VGroup height="50" width="30%"
+					  horizontalAlign="center" verticalAlign="middle">
+				<s:Label text="{title}" fontSize="32" fontWeight="bold" />
+			</s:VGroup>
+			
+			<!-- MyButtonBar provides differents buttons to interact with explorer --> 
+			<myButtonBar:MyButtonBar height="50" width="70%">
+				
+				<s:Button label="Créer un dossier" click="createFolder_clickHandler(event)" />
+				<s:Button label="Envoyer un fichier" click="uploadFile_clickHandler(event)" />
+				<s:Button label="Renommer" enabled="{myTileGroup.selectedItem != null}" click="rename_clickHandler(event)" />
+				<s:Button label="Effacer" enabled="{myTileGroup.selectedItem != null}" click="delete_clickHandler(event)" />
+				<s:Button label="Retour" click="return_clickHandler(event)" />
+				
+				<!--<s:Button label="Changer d'affichage" click="display_clickHandler(event)" />-->
+				
+			</myButtonBar:MyButtonBar>
+			
+		</s:HGroup>
+		
+		<s:HGroup height="100%" width="100%">
+			
+			<!-- MyAdvancedDataGrid  -->
+			<myTreeGroup:MyTreeGroup id="myAdvancedDataGrid" height="100%" width="30%" 
+								   dataProvider="{new HierarchicalData(dataProvider)}"
+								   change="myAdvancedDataGrid_selectedIndexChange()"
+								   valueCommit="myAdvancedDataGrid_selectedIndexChange()"
+								   itemDrop="myAdvancedDataGrid_itemDropHandler(event)" />
+			
+			<s:Group height="100%" width="70%">
+				
+				<s:Rect height="100%" width="100%">
+					<s:stroke>
+						<s:SolidColorStroke color="0x696969" />
+					</s:stroke>
+				</s:Rect>
+				
+				<components:MyTileGroup id="myTileGroup" height="100%" width="100%"
+								labelField="name" sourceField="type" sourceFunction="{sourceFunction}"
+								childHeight="128" childWidth="128"
+								groupRightMouseDown="myTileGroup_groupRightMouseDownHandler(event)"
+								childRightMouseDown="myTileGroup_childRightMouseDownHandler(event)"
+								childDoubleClick="myTileGroup_childDoubleClickHandler(event)"
+								childDragDrop="myTileGroup_childDragDropHandler(event)" />
+				
+			</s:Group>
+			
+		</s:HGroup>
+		
+	</s:VGroup>
+	
+	<fx:Script>
+		<![CDATA[
+			import com.dbraillon.my.myInputPopup.MyInputPopup;
+			import com.dbraillon.my.myInputPopup.MyInputPopupEvent;
+			import com.dbraillon.my.myTreeGroup.MyTreeGroupEvent;
+			import com.dbraillon.my.myExplorer.components.MyTileGroupEvent;
+			import com.dbraillon.my.myExplorer.components.MyTileGroupItem;
+			import flash.globalization.DateTimeFormatter;
+			
+			import mx.collections.HierarchicalData;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.managers.PopUpManager;
+			
+			
+			/* Metadata */
+			private var _dataProvider:Object;
+			private var _sourceFunction:Function;
+			private var _title:String;
+			
+			/* History */
+			private var _history:Array;
+			
+			/* Context menu */
+			private var _tileGroupContextMenu:ContextMenu;
+			private var createFolderContextMenuItem:ContextMenuItem;
+			private var uploadFileContextMenuItem:ContextMenuItem;
+			private var renameContextMenuItem:ContextMenuItem;
+			private var deleteContextMenuItem:ContextMenuItem;
+			
+			/* Upload */
+			private var fileReference:FileReference;
+			
+			private var myExplorerEvent:MyExplorerEvent
+			
+			
+			/**
+			 * Link between TreeGroup and TileGroup
+			 */
+			
+			/* Open folder in TileGroup that is selected in TreeGroup */
+			protected function myAdvancedDataGrid_selectedIndexChange():void
+			{
+				trace("+ TreeGroup.selectedItem changed");
+				
+				if(myAdvancedDataGrid.selectedItem)
+				{
+					// myAdvancedDataGrid already change its selected item all we want is
+					// to take its folders and files and display it in TileGroup
+					var selectedItem:Object = myAdvancedDataGrid.selectedItem;
+					
+					// Take folders in children and files in files
+					var children:Array = selectedItem.children;
+					var files:Array = selectedItem.files;
+					
+					var concat:Array = new Array();
+					
+					// We can't concat an empty array, otherwise it will create an empty
+					// item inside
+					if(children.length > 0)
+					{
+						concat = children;
+					}
+					if(files.length > 0)
+					{
+						concat = concat.concat(files);
+					}
+					
+					// Keep an history of that
+					history.push(selectedItem);
+					
+					// Remove old provider
+					myTileGroup.dataProvider = null;
+					
+					// Attach the new provider in TileGroup
+					myTileGroup.dataProvider = concat;
+					
+					// Expand new selectedItem later
+					callLater(myAdvancedDataGrid.expandItem, [selectedItem, true]);
+				}
+			}
+			
+			/* Open folder in both TileGroup and TreeGroup */
+			protected function myTileGroup_childDoubleClickHandler(event:MyTileGroupEvent):void
+			{
+				trace("+ TileGroupItem.doubleClick");
+				trace("! The child should be known by event not by selectedItem");
+				
+				if(myTileGroup.selectedItem && myTileGroup.selectedItem.provider.type == "folder")
+				{
+					myAdvancedDataGrid.selectedItem = myTileGroup.selectedItem.provider;
+				}
+			}
+			
+			
+			/**
+			 * Context menu
+			 */
+			
+			/* Creation of context menu */
+			private function buildContextMenu():void
+			{
+				trace("+ Build contextMenu for all components");
+				
+				// Creates all buttons in TileGroup context menu
+				createFolderContextMenuItem = new ContextMenuItem("Nouveau dossier");
+				createFolderContextMenuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, createFolder_clickHandler);
+				
+				uploadFileContextMenuItem = new ContextMenuItem("Envoyer un fichier");
+				uploadFileContextMenuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, uploadFile_clickHandler);
+				
+				renameContextMenuItem = new ContextMenuItem("Renommer");
+				renameContextMenuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, rename_clickHandler);
+				
+				deleteContextMenuItem = new ContextMenuItem("Effacer");
+				deleteContextMenuItem.addEventListener(ContextMenuEvent.MENU_ITEM_SELECT, delete_clickHandler);
+				
+				tileGroupContextMenu = new ContextMenu();
+				tileGroupContextMenu.hideBuiltInItems();
+				tileGroupContextMenu.customItems.push(createFolderContextMenuItem, uploadFileContextMenuItem, 
+													  renameContextMenuItem, deleteContextMenuItem);
+				
+				myTileGroup.contextMenu = tileGroupContextMenu;
+			}
+			
+			/* Open context menu on TileItem */
+			protected function myTileGroup_childRightMouseDownHandler(event:Event):void
+			{
+				trace("TileGroupItem.rightMouseDown");
+				
+				renameContextMenuItem.visible = true;
+				deleteContextMenuItem.visible = true;
+				
+				// prevent event to reach TileGroup
+				event.stopImmediatePropagation();
+			}
+			
+			/* Open context menu on TileGroup */
+			protected function myTileGroup_groupRightMouseDownHandler(event:MyTileGroupEvent):void
+			{
+				trace("TileGroup.rightMouseDown");
+				
+				renameContextMenuItem.visible = false;
+				deleteContextMenuItem.visible = false;
+			}
+			
+			
+			/**
+			 * Drop events
+			 */
+			
+			/* Item dropped on ItemTree */
+			protected function myAdvancedDataGrid_itemDropHandler(event:MyTreeGroupEvent):void
+			{
+				trace(event.from.path, event.to.path);
+				
+				var oldItem:Object = event.from;
+				var destination:Object = event.to;
+				
+				var newItem:Object = new Object();
+				newItem.oldPath = oldItem.path;
+				newItem.name = oldItem.name;
+				newItem.path = destination.path + "/" + newItem.name;
+				newItem.type = oldItem.type;
+				
+				if(newItem.type == "folder")
+				{
+					newItem.lastModification = oldItem.lastModification;
+					newItem.files = oldItem.files;
+					newItem.children = oldItem.children;					
+				}
+				
+				var item:Object = new Object();
+				item.oldItem = oldItem;
+				item.destination = destination;
+				item.newItem = newItem;
+				
+				// Verify if this name is not already taken
+				for each(var folder:Object in event.to.children)
+				{
+					if(folder.name == oldItem.name)
+					{
+						trace("- There is already a folder with that name");
+						return;
+					}
+				}
+				
+				for each(var file:Object in event.to.files)
+				{
+					if(file.name == oldItem.name)
+					{
+						trace("- There is already a file with that name");
+						return;
+					}
+				}
+				
+				myExplorerEvent = new MyExplorerEvent(MyExplorerEvent.MOVE, item, move_callBack);
+				dispatchEvent(myExplorerEvent);
+			}
+			
+			/* Item dropped on TileGroup */
+			protected function myTileGroup_childDragDropHandler(event:MyTileGroupEvent):void
+			{
+				trace((event.from as MyTileGroupItem).provider.path, (event.to as MyTileGroupItem).provider.path);
+				
+				var oldItem:Object = (event.from as MyTileGroupItem).provider;
+				var destination:Object = (event.to as MyTileGroupItem).provider;
+				
+				var newItem:Object = new Object();
+				newItem.oldPath = oldItem.path;
+				newItem.name = oldItem.name;
+				newItem.path = destination.path + "/" + newItem.name;
+				newItem.type = oldItem.type;
+				
+				if(newItem.type == "folder")
+				{
+					newItem.lastModification = oldItem.lastModification;
+					newItem.files = oldItem.files;
+					newItem.children = oldItem.children;					
+				}
+				
+				var item:Object = new Object();
+				item.oldItem = oldItem;
+				item.destination = destination;
+				item.newItem = newItem;
+				
+				// Verify if this name is not already taken
+				for each(var folder:Object in destination.children)
+				{
+					if(folder.name == oldItem.name)
+					{
+						trace("- There is already a folder with that name");
+						return;
+					}
+				}
+				
+				for each(var file:Object in destination.files)
+				{
+					if(file.name == oldItem.name)
+					{
+						trace("- There is already a file with that name");
+						return;
+					}
+				}
+				
+				myExplorerEvent = new MyExplorerEvent(MyExplorerEvent.MOVE, item, move_callBack);
+				dispatchEvent(myExplorerEvent);
+			}
+			
+			private function move_callBack():void
+			{
+				trace("+ MoveCallBack");
+				
+				// Delete a folder
+				if(myExplorerEvent.data.oldItem.type == "folder")
+				{
+					var indexFolder:int = myAdvancedDataGrid.selectedItem.children.indexOf(myExplorerEvent.data.oldItem);
+					myAdvancedDataGrid.selectedItem.children.splice(indexFolder, 1);
+					
+					// Find all occurence of deleted folder in history and remove it
+					while((indexFolder = history.indexOf(myExplorerEvent.data.oldItem)) != -1)
+					{
+						history.splice(indexFolder, 1);
+					}
+				}
+				// Delete a file
+				else
+				{
+					var indexFile:int = myAdvancedDataGrid.selectedItem.files.indexOf(myExplorerEvent.data.oldItem);
+					myAdvancedDataGrid.selectedItem.files.splice(indexFile, 1);
+				}
+				
+				// Create a folder
+				if(myExplorerEvent.data.oldItem.type == "folder")
+				{
+					myExplorerEvent.data.destination.children.push(myExplorerEvent.data.newItem);
+				}
+				// Create a file
+				else
+				{
+					myExplorerEvent.data.destination.files.push(myExplorerEvent.data.newItem);
+				}
+				
+				// Refresh TreeGroup
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, false);
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, true);
+				
+				// Refresh TileGroup
+				history.pop();
+				myAdvancedDataGrid_selectedIndexChange();
+			}
+			
+			
+			
+			/**
+			 * Basic commands
+			 */
+			
+			/* Upload a file */
+			protected function uploadFile_clickHandler(event:Event):void
+			{
+				trace("+ UploadButton.click");
+				
+				fileReference = new FileReference();
+				fileReference.addEventListener(Event.SELECT, uploadFile_selectedHandler);
+				fileReference.browse();
+			}
+			
+			protected function uploadFile_selectedHandler(event:Event):void
+			{
+				trace("+ UploadBrowse.result");
+				
+				// Verify if this name is not already taken
+				for each(var folder:Object in myAdvancedDataGrid.selectedItem.children)
+				{
+					if(folder.name == fileReference.name)
+					{
+						trace("- There is already a folder with that name");
+						return;
+					}
+				}
+				
+				for each(var file:Object in myAdvancedDataGrid.selectedItem.files)
+				{
+					if(file.name == fileReference.name)
+					{
+						trace("- There is already a file with that name");
+						return;
+					}
+				}
+				
+				file = new Object();
+				file.ref = fileReference;
+				file.path = myAdvancedDataGrid.selectedItem.path + "/" + fileReference.name;
+				file.name = fileReference.name;
+				file.type = fileReference.type.substring(1);
+				
+				myExplorerEvent = new MyExplorerEvent(MyExplorerEvent.UPLOAD_FILE, file, uploadFile_callBack);
+				dispatchEvent(myExplorerEvent);
+			}
+			
+			private function uploadFile_callBack():void
+			{
+				trace("+ UploadFileCallBack");
+				
+				myAdvancedDataGrid.selectedItem.files.push(myExplorerEvent.data);
+				
+				// Refresh TreeGroup
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, false);
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, true);
+				
+				// Refresh TileGroup
+				history.pop();
+				myAdvancedDataGrid_selectedIndexChange();
+			}
+			
+			/* Rename a file or folder */
+			protected function rename_clickHandler(event:Event):void
+			{
+				trace("+ RenameButton.click");
+				
+				var inputPopup:MyInputPopup = new MyInputPopup();
+				inputPopup.title = "Renommage d'un " + (myTileGroup.selectedItem.provider.type == "folder") ? "dossier" : "fichier";
+				inputPopup.myInputText = myTileGroup.selectedItem.provider.name;
+				inputPopup.addEventListener(MyInputPopupEvent.RESULT, rename_inputResultHandler);
+				
+				PopUpManager.addPopUp(inputPopup, this, true);
+				PopUpManager.centerPopUp(inputPopup);
+			}
+			
+			protected function rename_inputResultHandler(event:MyInputPopupEvent):void
+			{
+				trace("+ RenameInputPopup.result : " + event.data.name);
+				
+				// Verify if this name is not already taken
+				for each(var folder:Object in myAdvancedDataGrid.selectedItem.children)
+				{
+					if(folder.name == event.data.name)
+					{
+						trace("- There is already a folder with that name");
+						return;
+					}
+				}
+				
+				for each(var file:Object in myAdvancedDataGrid.selectedItem.files)
+				{
+					if(file.name == event.data.name)
+					{
+						trace("- There is already a file with that name");
+						return;
+					}
+				}
+				
+				var renamedFile:Object = new Object();
+				renamedFile.oldPath = myTileGroup.selectedItem.provider.path;
+				renamedFile.newPath = myAdvancedDataGrid.selectedItem.path + "/" + event.data.name;
+				renamedFile.newName = event.data.name;
+				
+				myExplorerEvent = new MyExplorerEvent(MyExplorerEvent.RENAME, renamedFile, rename_callBack);
+				dispatchEvent(myExplorerEvent);
+			}
+			
+			private function rename_callBack():void
+			{
+				trace("+ RenameCallBack");
+				
+				// Rename a folder
+				if(myTileGroup.selectedItem.provider.type == "folder")
+				{
+					var indexFolder:int = myAdvancedDataGrid.selectedItem.children.indexOf(myTileGroup.selectedItem.provider);
+					myAdvancedDataGrid.selectedItem.children[indexFolder].name = myExplorerEvent.data.newName;
+					myAdvancedDataGrid.selectedItem.children[indexFolder].path = myExplorerEvent.data.newPath;
+					
+					myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, false);
+					myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, true);
+				}
+					// Rename a file
+				else
+				{
+					var indexFile:int = myAdvancedDataGrid.selectedItem.files.indexOf(myTileGroup.selectedItem.provider);
+					myAdvancedDataGrid.selectedItem.files[indexFile].name = myExplorerEvent.data.newName;
+					myAdvancedDataGrid.selectedItem.files[indexFile].path = myExplorerEvent.data.newPath;
+				}
+				
+				// Refresh TreeGroup
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, false);
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, true);
+				
+				// Refresh TileGroup
+				history.pop();
+				myAdvancedDataGrid_selectedIndexChange();
+			}
+			
+			/* Delete a file or folder */
+			protected function delete_clickHandler(event:Event):void
+			{
+				trace("+ DeleteButton.click");
+				
+				Alert.show("Voulez-vous vraiment supprimer " + myTileGroup.selectedItem.provider.name + " ?", 
+					"Confirmation", Alert.YES | Alert.NO, this, delete_alertCloseHandler, null, Alert.NO);
+			}
+			
+			private function delete_alertCloseHandler(event:CloseEvent):void
+			{
+				trace("+ DeleteAlert.close : " + event.detail);
+				
+				if(event.detail == Alert.YES)
+				{
+					var deletedItem:Object = new Object();
+					deletedItem.path = myTileGroup.selectedItem.provider.path;
+					
+					myExplorerEvent = new MyExplorerEvent(MyExplorerEvent.DELETE, deletedItem, delete_callBack);
+					dispatchEvent(myExplorerEvent);
+				}
+			}
+			
+			private function delete_callBack():void
+			{
+				trace("+ DeleteCallBack");
+				
+				// Delete a folder
+				if(myTileGroup.selectedItem.provider.type == "folder")
+				{
+					var indexFolder:int = myAdvancedDataGrid.selectedItem.children.indexOf(myTileGroup.selectedItem.provider);
+					myAdvancedDataGrid.selectedItem.children.splice(indexFolder, 1);
+					
+					// Find all occurence of deleted folder in history and remove it
+					while((indexFolder = history.indexOf(myTileGroup.selectedItem.provider)) != -1)
+					{
+						history.splice(indexFolder, 1);
+					}
+				}
+					// Delete a file
+				else
+				{
+					var indexFile:int = myAdvancedDataGrid.selectedItem.files.indexOf(myTileGroup.selectedItem.provider);
+					myAdvancedDataGrid.selectedItem.files.splice(indexFile, 1);
+				}
+				
+				// Refresh TreeGroup
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, false);
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, true);
+				
+				// Refresh TileGroup
+				history.pop();
+				myAdvancedDataGrid_selectedIndexChange();
+			}
+			
+			/* Create a folder */
+			protected function createFolder_clickHandler(event:Event):void
+			{
+				trace("+ CreateFolderButton.click");
+				
+				var inputPopup:MyInputPopup = new MyInputPopup();
+				inputPopup.title = "Création d'un nouveau dossier"
+				inputPopup.myInputText = "Nouveau dossier";
+				inputPopup.addEventListener(MyInputPopupEvent.RESULT, createFolder_inputResultHandler);
+				
+				PopUpManager.addPopUp(inputPopup, this, true);
+				PopUpManager.centerPopUp(inputPopup);
+			}
+			
+			protected function createFolder_inputResultHandler(event:MyInputPopupEvent):void
+			{
+				trace("+ CreateFolderInputPopup.result : " + event.data.name);
+				
+				// Verify if this name is not already taken
+				for each(var object:Object in myAdvancedDataGrid.selectedItem.children)
+				{
+					if(object.name == event.data.name)
+					{
+						trace("- There is already a folder with that name");
+						return;
+					}
+				}
+				
+				var dateFormatter:DateTimeFormatter = new DateTimeFormatter("fr-FR");
+				dateFormatter.setDateTimePattern("EEEE dd MMMM yyyy, HH:mm:ss");
+				
+				// Create the folder
+				var item:Object = new Object();
+				item.path = myAdvancedDataGrid.selectedItem.path + "/" + event.data.name;
+				item.name = event.data.name;
+				item.type = "folder";
+				item.lastModification = dateFormatter.format(new Date());
+				item.files = new Array();
+				item.children = new Array();
+				
+				myExplorerEvent = new MyExplorerEvent(MyExplorerEvent.CREATE_FOLDER, item, createFolder_callBack);
+				dispatchEvent(myExplorerEvent);
+			}
+			
+			private function createFolder_callBack():void
+			{
+				// Add the folder into children parent
+				myAdvancedDataGrid.selectedItem.children.push(myExplorerEvent.data);
+				
+				// Refresh TreeGroup
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, false);
+				myAdvancedDataGrid.expandItem(myAdvancedDataGrid.selectedItem, true);
+				
+				// Refresh TileGroup
+				history.pop();
+				myAdvancedDataGrid_selectedIndexChange();
+			}
+			
+			/* Return in parent folder */
+			protected function return_clickHandler(event:MouseEvent):void
+			{
+				trace("+ ReturnButton.click");
+				
+				if(history.length > 1)
+				{
+					// Close the current member of history
+					var current:Object = history.pop();
+					//myAdvancedDataGrid.expandItem(current, false);
+					
+					// Get the parent and display it
+					var parent:Object = history.pop();
+					myAdvancedDataGrid.selectedItem = parent;
+				}
+			}
+			
+			/* Change the way items are displayed in list */
+			protected function display_clickHandler(event:MouseEvent):void
+			{
+				trace("Not yet implemented");
+			}
+			
+			
+			[Bindable]
+			public function get dataProvider():Object
+			{
+				return _dataProvider;
+			}
+			[Inspectable]
+			public function set dataProvider(value:Object):void
+			{
+				_dataProvider = value;
+			}
+			
+			[Bindable]
+			public function get sourceFunction():Function
+			{
+				return _sourceFunction;
+			}
+			[Inspectable]
+			public function set sourceFunction(value:Function):void
+			{
+				_sourceFunction = value;
+			}
+
+			private function get history():Array
+			{
+				if(!_history)
+				{
+					_history = new Array();
+				}
+				
+				return _history;
+			}
+			private function set history(value:Array):void
+			{
+				_history = value;
+			}
+
+			[Bindable]
+			public function get tileGroupContextMenu():ContextMenu
+			{
+				return _tileGroupContextMenu;
+			}
+
+			public function set tileGroupContextMenu(value:ContextMenu):void
+			{
+				_tileGroupContextMenu = value;
+			}
+
+			[Bindable]
+			public function get title():String
+			{
+				return _title;
+			}
+
+			[Inspectable]
+			public function set title(value:String):void
+			{
+				_title = value;
+			}
+
+			
+		]]>
+	</fx:Script>
+	
+</s:Group>

@@ -2,15 +2,24 @@
 <s:TileGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
 			 xmlns:s="library://ns.adobe.com/flex/spark" 
 			 xmlns:mx="library://ns.adobe.com/flex/mx"
-			 paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5">
-	
-	<fx:Declarations>
-		<!-- Placer ici les éléments non visuels (services et objets de valeur, par exemple). -->
-	</fx:Declarations>
-	
+			 paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5"
+			 doubleClickEnabled="true"
+			 mouseDown="myTileGroup_mouseDownHandler(event)"
+			 mouseOver="myTileGroup_mouseOverHandler(event)">
+	<!--rightMouseDown="myTileGroup_rightMouseDownHandler(event)"-->
 	<fx:Metadata> 
-		[Event(name="childDragDrop", type="com.dbraillon.bd.MyTileGroupEvent")]
-		[Event(name="change", type="flash.events.Event")]
+		
+		// Basic events
+		[Event(name="groupSelectedChange", type="com.dbraillon.my.myExplorer.components.MyTileGroupEvent")]
+		[Event(name="childDoubleClick", type="com.dbraillon.my.myExplorer.components.MyTileGroupEvent")]
+		
+		// Drag'n'drop
+		[Event(name="childDragDrop", type="com.dbraillon.my.myExplorer.components.MyTileGroupEvent")]
+		
+		// Context menu
+		[Event(name="groupRightMouseDown", type="com.dbraillon.my.myExplorer.components.MyTileGroupEvent")]
+		[Event(name="childRightMouseDown", type="com.dbraillon.my.myExplorer.components.MyTileGroupEvent")]
+		
 	</fx:Metadata> 
 	
 	<fx:Script>
@@ -20,8 +29,6 @@
 			import mx.core.UIComponent;
 			import mx.events.DragEvent;
 			import mx.managers.DragManager;
-			import mx.utils.ArrayUtil;
-			import mx.utils.ObjectUtil;
 			
 			import spark.components.Group;
 			
@@ -42,7 +49,8 @@
 				element.addEventListener(DragEvent.DRAG_ENTER, childDragEnter);
 				element.addEventListener(DragEvent.DRAG_EXIT, childDragExit);
 				element.addEventListener(DragEvent.DRAG_DROP, childDrop);
-				element.addEventListener("rightMouseDown", childRightMouseDown);
+				element.addEventListener(MouseEvent.DOUBLE_CLICK, child_doubleClickHandler);
+				element.addEventListener(MouseEvent.MOUSE_OVER, childMouseOver);
 			}
 			
 			public override function addElement(element:IVisualElement):IVisualElement
@@ -80,7 +88,7 @@
 				removeAllElements();
 				selectedItem = null;
 				
-				for each(var item:Object in ArrayUtil.toArray(list))
+				for each(var item:Object in list)
 				{
 					var source:String;
 					if(sourceFunction != null)
@@ -116,6 +124,8 @@
 				{
 					selectedItem.select();
 				}
+				
+				event.stopImmediatePropagation();
 			}
 			
 			private function childDragStart(event:MouseEvent):void
@@ -153,17 +163,11 @@
 				{
 					var initiator:UIComponent = event.dragInitiator as UIComponent;
 					var destination:UIComponent = event.currentTarget as UIComponent;
-					var myTileGroupEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.DROP, initiator, destination);
+					var myTileGroupEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.CHILD_DRAG_DROP, initiator, destination);
 					
 					dispatchEvent(myTileGroupEvent);
 				}
 			}
-			
-			private function childRightMouseDown(event:MouseEvent):void
-			{
-				
-			}
-			
 			
 			[Bindable]
 			public function get dataProvider():Object
@@ -229,6 +233,63 @@
 			public function set sourceFunction(value:Function):void
 			{
 				_sourceFunction = value;
+			}
+			
+			protected function myTileGroup_mouseDownHandler(event:MouseEvent):void
+			{
+				if(selectedItem)
+				{
+					selectedItem.deselect();
+					selectedItem = null;
+				}
+			}
+			
+			private function child_doubleClickHandler(event:MouseEvent):void
+			{
+				var myEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.CHILD_DOUBLE_CLICK, selectedItem as UIComponent);
+				dispatchEvent(myEvent);
+			}
+			
+			
+			
+			
+			
+			
+			/*
+			protected function myTileGroup_rightMouseDownHandler(event:MouseEvent):void
+			{
+				if(selectedItem)
+				{
+					selectedItem.deselect();
+					selectedItem = null;
+				}
+				
+				var myEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.GROUP_RIGHT_MOUSE_DOWN);
+				dispatchEvent(myEvent);
+			}
+			
+			private function childRightMouseDown(event:MouseEvent):void
+			{
+				childSelect(event);
+				
+				dispatchEvent(new MyTileGroupEvent(MyTileGroupEvent.CHILD_RIGHT_MOUSE_DOWN));
+			}
+			*/
+			
+			protected function myTileGroup_mouseOverHandler(event:MouseEvent):void
+			{
+				trace("Over Group");
+				
+				var myEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.GROUP_RIGHT_MOUSE_DOWN);
+				dispatchEvent(myEvent);
+			}
+			
+			private function childMouseOver(event:MouseEvent):void
+			{
+				trace("Over Child");
+				
+				event.stopImmediatePropagation();
+				dispatchEvent(new MyTileGroupEvent(MyTileGroupEvent.CHILD_RIGHT_MOUSE_DOWN));
 			}
 			
 		]]>
