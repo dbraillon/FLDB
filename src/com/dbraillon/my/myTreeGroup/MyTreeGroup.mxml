@@ -61,7 +61,7 @@
 								protected function item_dragDropHandler(event:DragEvent):void
 								{
 									var object:Object = new Object();
-									object.from = event.dragSource.dataForFormat("dragedElement");
+									object.from = (event.dragInitiator as List).selectedItem;
 									object.to = data;
 									object.callBack = callBack_dragEnterHandler;
 									
@@ -122,6 +122,8 @@
 			/* Basic myTreeGroup compare function */
 			private function myDragEnterCompare(fromObject:Object, toObject:Object):Boolean
 			{
+				trace("f:" + fromObject.itemName + " t:" + toObject.itemName);
+				
 				if(!fromObject.hasOwnProperty("id") || !toObject.hasOwnProperty(idField))
 				{
 					return false;
