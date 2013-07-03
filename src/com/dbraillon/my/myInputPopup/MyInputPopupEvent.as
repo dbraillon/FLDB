@@ -10,7 +10,7 @@ package com.dbraillon.my.myInputPopup
 		
 		private var _data:Object;
 		
-		public function MyInputPopupEvent(type:String, data:Object, bubbles:Boolean=false, cancelable:Boolean=false)
+		public function MyInputPopupEvent(type:String, data:Object=null, bubbles:Boolean=false, cancelable:Boolean=false)
 		{
 			super(type, bubbles, cancelable);
 			this.data = data;

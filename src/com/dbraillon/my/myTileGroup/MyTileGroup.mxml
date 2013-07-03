@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:TileGroup xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			 xmlns:s="library://ns.adobe.com/flex/spark" 
+			 xmlns:mx="library://ns.adobe.com/flex/mx"
+			 paddingBottom="5" paddingLeft="5" paddingRight="5" paddingTop="5"
+			 mouseDown="myTileGroup_mouseDownHandler(event)">
+	
+	<fx:Metadata> 
+		
+		// Basic events
+		[Event(name="change", type="flash.events.Event")]
+		[Event(name="myTileGroupDoubleClick", type="com.dbraillon.my.myTileGroup.MyTileGroupEvent")]
+		
+		// Drag'n'drop
+		[Event(name="myTileGroupDragDrop", type="com.dbraillon.my.myTileGroup.MyTileGroupEvent")]
+		
+	</fx:Metadata> 
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.containers.Canvas;
+			import mx.core.DragSource;
+			import mx.core.IVisualElement;
+			import mx.core.UIComponent;
+			import mx.events.DragEvent;
+			import mx.managers.DragManager;
+			import mx.managers.SystemManager;
+			
+			import spark.components.Image;
+			
+			
+			private var _dataProvider:Object;
+			private var _selectedItem:Object;
+			
+			private var _labelField:String;
+			private var _idField:String;
+			private var _sourceField:String;
+			
+			private var _childHeight:int;
+			private var _childWidth:int;
+			
+			private var _dragEnterCompare:Function;
+			
+			/* Override addElement method to add listeners */
+			public override function addElement(element:IVisualElement):IVisualElement
+			{
+				child_addEventListeners(element);
+				return super.addElement(element);
+			}
+			
+			/* Override addElementAt method to add listeners */
+			public override function addElementAt(element:IVisualElement, index:int):IVisualElement
+			{
+				child_addEventListeners(element);
+				return super.addElementAt(element, index);
+			}
+			
+			/* Add to new child all listeners needed */
+			private function child_addEventListeners(element:IVisualElement):void
+			{
+				element.addEventListener(MouseEvent.MOUSE_DOWN, child_mouseDownHandler);
+				element.addEventListener(MouseEvent.DOUBLE_CLICK, child_doubleClickHandler);
+				element.addEventListener(DragEvent.DRAG_ENTER, child_dragEnterHandler);
+				element.addEventListener(DragEvent.DRAG_EXIT, child_dragExitHandler);
+				element.addEventListener(DragEvent.DRAG_DROP, child_dragDropHandler);
+			}
+			
+			/* If mouseDown event is not in child then deselect current selectedItem */
+			protected function myTileGroup_mouseDownHandler(event:MouseEvent):void
+			{
+				if(selectedItem && selectedItem is MyTileGroupItem)
+				{
+					(selectedItem as MyTileGroupItem).select(false);
+				}
+				
+				selectedItem = null;
+			}
+			
+			/* public override function set mxmlContent(array:Array):void */
+			
+			
+			[Inspectable]
+			public function set dataProvider(provider:Object):void
+			{
+				_dataProvider = provider;
+				
+				// Remove all elements and pass selectedItem to null
+				removeAllElements();
+				selectedItem = null;
+				
+				for each(var item:Object in provider)
+				{
+					// For each item in dataProvider, create a new myTileGroupItem
+					// and display it
+					
+					var myTileGroupItem:MyTileGroupItem = new MyTileGroupItem();
+					myTileGroupItem.height = _childHeight;
+					myTileGroupItem.width = _childWidth;
+					myTileGroupItem.source = item[sourceField];
+					myTileGroupItem.label = item[labelField];
+					myTileGroupItem.provider = item;
+					
+					addElement(myTileGroupItem);
+				}
+			}
+			
+			/* Deselect the current selected child and select the new one */
+			private function child_select(event:MouseEvent):void
+			{
+				if(selectedItem && selectedItem is MyTileGroupItem)
+				{
+					(selectedItem as MyTileGroupItem).select(false);
+				}
+				
+				selectedItem = event.currentTarget;
+				
+				if(selectedItem && selectedItem is MyTileGroupItem)
+				{
+					(selectedItem as MyTileGroupItem).select(true);
+				}
+				
+				// Prevent this.mouseDown event to handle the mouseDown that would deselect the child
+				event.stopImmediatePropagation();
+			}
+			
+			/* Start the child drag */
+			private function child_startDrag(event:MouseEvent):void
+			{
+				var element:UIComponent = UIComponent(event.currentTarget);
+				
+				var initiator:Image = new Image();
+				initiator.source = event.currentTarget.source;
+					
+				var dragSource:DragSource = new DragSource();
+				if(element is MyTileGroupItem)
+				{
+					dragSource.addData((element as MyTileGroupItem).provider, "dragedElement");
+				}
+				
+				DragManager.doDrag(initiator, dragSource, event, initiator);//, element);
+			}
+			
+			/* Select an element and initialize the drag'n'drop */
+			private function child_mouseDownHandler(event:MouseEvent):void
+			{
+				child_select(event);
+				child_startDrag(event);
+			}
+			
+			private function child_doubleClickHandler(event:MouseEvent):void
+			{
+				var myEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.DOUBLE_CLICK);
+				myEvent.data.dataProvider = event.currentTarget.provider;
+				
+				dispatchEvent(myEvent);
+			}
+			
+			protected function child_dragEnterHandler(event:DragEvent):void
+			{
+				var object:Object = new Object();
+				object.from = event.dragSource.dataForFormat("dragedElement");
+				object.to = (event.currentTarget as MyTileGroupItem).provider;
+				
+				if(!dragEnterCompare.call(null, object.from, object.to))
+				{
+					//(event.currentTarget as MyTileGroupItem).highlight(true);
+					DragManager.acceptDragDrop(event.currentTarget as UIComponent);
+					//event.preventDefault();
+				}
+			}
+			
+			private function compare_dragEnterHandler(fromObject:Object, toObject:Object):Boolean
+			{
+				if(!fromObject.hasOwnProperty("id") || !toObject.hasOwnProperty(idField))
+				{
+					return false;
+				}
+				
+				if(fromObject["id"] == toObject[idField])
+				{
+					return true;
+				}
+				
+				return false;
+			}
+			
+			protected function child_dragExitHandler(event:DragEvent):void
+			{
+				if(event.currentTarget is MyTileGroupItem)
+				{
+					//event.currentTarget.looseFocus();
+				}
+			}
+			
+			protected function child_dragDropHandler(event:DragEvent):void
+			{
+				var object:Object = new Object();
+				object.from = event.dragSource.dataForFormat("dragedElement");
+				object.to = (event.currentTarget as MyTileGroupItem).provider;
+				
+				var myEvent:MyTileGroupEvent = new MyTileGroupEvent(MyTileGroupEvent.DRAG_DROP, object);
+				dispatchEvent(myEvent);
+			}
+			
+			[Bindable]
+			public function get dataProvider():Object
+			{
+				return _dataProvider;
+			}
+
+			[Inspectable]
+			public function set childHeight(value:int):void
+			{
+				_childHeight = value;
+			}
+
+			[Inspectable]
+			public function set childWidth(value:int):void
+			{
+				_childWidth = value;
+			}
+
+			[Bindable]
+			public function get selectedItem():Object
+			{
+				return _selectedItem;
+			}
+
+			public function set selectedItem(value:Object):void
+			{
+				_selectedItem = value;
+				dispatchEvent(new Event(Event.CHANGE));
+			}
+
+			public function get labelField():String
+			{
+				if(!_labelField)
+				{
+					_labelField = "label";
+				}
+				
+				return _labelField;
+			}
+
+			[Inspectable]
+			public function set labelField(value:String):void
+			{
+				_labelField = value;
+			}
+
+			public function get sourceField():String
+			{
+				if(!_sourceField)
+				{
+					_sourceField = "";
+				}
+				
+				return _sourceField;
+			}
+
+			[Inspectable]
+			public function set sourceField(value:String):void
+			{
+				_sourceField = value;
+			}
+
+			[Bindable]
+			public function get dragEnterCompare():Function
+			{
+				if(_dragEnterCompare == null)
+				{
+					_dragEnterCompare = compare_dragEnterHandler;
+				}
+				
+				return _dragEnterCompare;
+			}
+
+			[Inspectable]
+			public function set dragEnterCompare(value:Function):void
+			{
+				_dragEnterCompare = value;
+			}
+
+			[Bindable]
+			public function get idField():String
+			{
+				if(!_idField)
+				{
+					_idField = "id";
+				}
+				
+				return _idField;
+			}
+
+			[Inspectable]
+			public function set idField(value:String):void
+			{
+				_idField = value;
+			}
+
+		]]>
+	</fx:Script>
+	
+</s:TileGroup>

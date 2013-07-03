@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx"
+		 width="400" height="300"
+		 creationComplete="myDetailList_creationCompleteHandler(event)">
+	
+	<fx:Metadata>
+		[Event(name="change", type="flash.events.Event")]
+		[Event(name="myDetailListDoubleClick", type="com.dbraillon.my.myDetailList.MyDetailListEvent")]
+		[Event(name="myDetailListDragDrop", type="com.dbraillon.my.myDetailList.MyDetailListEvent")]
+	</fx:Metadata>
+	
+	<mx:AdvancedDataGrid id="list" width="100%" height="100%"
+				dataProvider="{dataProvider}"
+				selectedItem="@{selectedItem}"
+				dragMoveEnabled="true" dragEnabled="true">
+		
+		<mx:columns>
+			<mx:AdvancedDataGridColumn dataField="name" headerText="Nom"/>
+			<mx:AdvancedDataGridColumn dataField="type" headerText="Type" width="75" />
+			<mx:AdvancedDataGridColumn dataField="lastModification" headerText="Dernière modification" width="300" />
+			<mx:AdvancedDataGridColumn dataField="size" headerText="Taille" width="100" />
+		</mx:columns>
+		
+		
+		<mx:rendererProviders>
+			<mx:AdvancedDataGridRendererProvider>
+				<mx:renderer>
+					<fx:Component>
+						<mx:AdvancedDataGridGroupItemRenderer 
+							mouseDown="item_mouseDownHandler(event)"
+							mouseUp="item_mouseUpHandler(event)"
+							dragEnter="item_dragEnterHandler(event)"
+							dragDrop="item_dragDropHandler(event)"
+							doubleClickEnabled="true"
+							doubleClick="item_doubleClickHandler(event)">
+							
+							<fx:Script>
+								<![CDATA[
+									import com.dbraillon.my.myDetailList.MyDetailListEvent;
+									
+									import mx.core.DragSource;
+									import mx.core.UIComponent;
+									import mx.events.DragEvent;
+									import mx.managers.DragManager;
+									
+									
+									var timer:Timer;
+									var comp:UIComponent;
+									var myEvent:MouseEvent;
+									
+									protected function item_mouseDownHandler(event:MouseEvent):void
+									{
+										trace("DOWN");
+										
+										var element:UIComponent = UIComponent(event.currentTarget);
+										
+										var dragSource:DragSource = new DragSource();
+										dragSource.addData(data, "dragedElement");
+										
+										DragManager.doDrag(element, dragSource, event, element);
+										
+										/*
+										timer = new Timer(200, 1);
+										timer.addEventListener(TimerEvent.TIMER_COMPLETE, timerComplete);
+										comp = UIComponent(event.currentTarget);
+										myEvent = event;
+										timer.start();*/
+									}
+									
+									protected function item_mouseUpHandler(event:MouseEvent):void
+									{
+										trace("TIME UP");
+										
+										if(timer && timer.running)
+										{
+											timer.stop();
+										}
+									}
+									
+									protected function timerComplete(event:TimerEvent):void
+									{
+										trace("DRAG");
+										
+										var element:UIComponent = UIComponent(myEvent.target);
+										
+										var dragSource:DragSource = new DragSource();
+										dragSource.addData(data, "dragedElement");
+										
+										DragManager.doDrag(element, dragSource, myEvent, element);
+									}
+									
+									protected function item_dragEnterHandler(event:DragEvent):void
+									{
+										var object:Object = new Object();
+										object.from = event.dragSource.dataForFormat("dragedElement");
+										object.to = data;
+										object.callBack = callBack_dragEnterHandler;
+										
+										var myEvent:MyDetailListEvent = new MyDetailListEvent(MyDetailListEvent.INNER_DRAG_ENTER, object);
+										parent.parent.parent.dispatchEvent(myEvent);
+									}
+									
+									private function callBack_dragEnterHandler():void
+									{
+										DragManager.acceptDragDrop(this);
+										//event.preventDefault();
+									}
+									
+									protected function item_dragDropHandler(event:DragEvent):void
+									{
+										var object:Object = new Object();
+										object.from = event.dragSource.dataForFormat("dragedElement");
+										object.to = data;
+										object.callBack = callBack_dragEnterHandler;
+										
+										var myEvent:MyDetailListEvent = new MyDetailListEvent(MyDetailListEvent.INNER_DRAG_DROP, object);
+										parent.parent.parent.dispatchEvent(myEvent);
+									}
+									
+									protected function item_doubleClickHandler(event:MouseEvent):void
+									{
+										var object:Object = new Object();
+										object.from = data;
+										
+										var myEvent:MyDetailListEvent = new MyDetailListEvent(MyDetailListEvent.DOUBLE_CLICK, object);
+										parent.parent.parent.dispatchEvent(myEvent);
+									}
+									
+								]]>
+							</fx:Script>
+						</mx:AdvancedDataGridGroupItemRenderer>
+					</fx:Component>
+				</mx:renderer>
+			</mx:AdvancedDataGridRendererProvider>
+		</mx:rendererProviders>
+		
+	</mx:AdvancedDataGrid>
+	
+	<fx:Script>
+		<![CDATA[
+			import mx.events.FlexEvent;
+			
+			
+			private var _dataProvider:Object;
+			private var _idField:String;
+			private var _compareDragEnterFunction:Function;
+			private var _selectedItem:Object;
+
+			/* Register listeners */
+			protected function myDetailList_creationCompleteHandler(event:FlexEvent):void
+			{
+				list.addEventListener(MyDetailListEvent.INNER_DRAG_ENTER, item_dragEnterHandler);
+				list.addEventListener(MyDetailListEvent.INNER_DRAG_DROP, item_dragDropHandler);
+				list.addEventListener(MyDetailListEvent.DOUBLE_CLICK, item_doubleClickHandler);
+			}
+			
+			protected function item_doubleClickHandler(event:MyDetailListEvent):void
+			{
+				var myEvent:MyDetailListEvent = new MyDetailListEvent(MyDetailListEvent.DOUBLE_CLICK, event.data);
+				dispatchEvent(myEvent);
+			}
+			
+			/* Get the compare method and launch it */
+			protected function item_dragEnterHandler(event:MyDetailListEvent):void
+			{
+				if(!compareDragEnterFunction.call(null, event.data.from, event.data.to))
+				{
+					// If the id is different callBack to accept the drag
+					event.data.callBack.call();
+				}
+			}
+			
+			/* Let parent receive the event and do stuff with the dropped object */
+			protected function item_dragDropHandler(event:MyDetailListEvent):void
+			{
+				var data:Object = new Object();
+				data.from = event.data.from;
+				data.to = event.data.to;
+				
+				var myEvent:MyDetailListEvent = new MyDetailListEvent(MyDetailListEvent.DRAG_DROP, data);
+				dispatchEvent(myEvent);
+			}
+			
+			/* Basic myTreeGroup compare function */
+			private function myDragEnterCompare(fromObject:Object, toObject:Object):Boolean
+			{
+				if(!fromObject.hasOwnProperty("id") || !toObject.hasOwnProperty(idField))
+				{
+					return false;
+				}
+				
+				if(fromObject["id"] == toObject[idField])
+				{
+					return true;
+				}
+				
+				return false;
+			}
+			
+			
+			[Bindable]
+			public function get dataProvider():Object
+			{
+				return _dataProvider;
+			}
+
+			[Inspectable]
+			public function set dataProvider(value:Object):void
+			{
+				_dataProvider = value;
+			}
+
+			[Bindable]
+			public function get compareDragEnterFunction():Function
+			{
+				if(_compareDragEnterFunction == null)
+				{
+					_compareDragEnterFunction = myDragEnterCompare;
+				}
+				
+				return _compareDragEnterFunction;
+			}
+
+			[Inspectable]
+			public function set compareDragEnterFunction(value:Function):void
+			{
+				_compareDragEnterFunction = value;
+			}
+
+			[Bindable]
+			public function get idField():String
+			{
+				if(!_idField)
+				{
+					_idField = "id";
+				}
+				
+				return _idField;
+			}
+
+			[Inspectable]
+			public function set idField(value:String):void
+			{
+				_idField = value;
+			}
+
+			[Bindable]
+			public function get selectedItem():Object
+			{
+				return _selectedItem;
+			}
+			
+			public function set selectedItem(value:Object):void
+			{
+				_selectedItem = value;
+				dispatchEvent(new Event(Event.CHANGE));
+			}
+
+			
+		]]>
+	</fx:Script>
+	
+</s:Group>

@@ -32,20 +32,23 @@
 						
 						<fx:Script>
 							<![CDATA[
+								import com.dbraillon.my.myTileGroup.MyTileGroup;
 								import com.dbraillon.my.myTreeGroup.MyTreeGroupEvent;
 								
 								import mx.events.DragEvent;
 								import mx.managers.DragManager;
 								
+								import spark.components.List;
+								
 								
 								protected function item_dragEnterHandler(event:DragEvent):void
 								{
-									var data:Object = new Object();
-									data.from = event.draggedItem;
-									data.to = data;
-									data.callBack = callBack_dragEnterHandler;
+									var object:Object = new Object();
+									object.from = (event.dragInitiator as List).selectedItem;
+									object.to = data;
+									object.callBack = callBack_dragEnterHandler;
 									
-									var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.INNER_DRAG_ENTER, data);
+									var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.INNER_DRAG_ENTER, object);
 									parent.parent.parent.dispatchEvent(myEvent);
 								}
 								
@@ -57,12 +60,12 @@
 								
 								protected function item_dragDropHandler(event:DragEvent):void
 								{
-									var data:Object = new Object();
-									data.from = event.draggedItem;
-									data.to = data;
-									data.callBack = callBack_dragEnterHandler;
+									var object:Object = new Object();
+									object.from = event.dragSource.dataForFormat("dragedElement");
+									object.to = data;
+									object.callBack = callBack_dragEnterHandler;
 									
-									var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.INNER_DRAG_DROP, data);
+									var myEvent:MyTreeGroupEvent = new MyTreeGroupEvent(MyTreeGroupEvent.INNER_DRAG_DROP, object);
 									parent.parent.parent.dispatchEvent(myEvent);
 								}
 								
@@ -135,8 +138,8 @@
 			/* When dataprovider is given, select the first item */
 			public override function set dataProvider(value:Object):void
 			{
+				super.dataProvider = null;
 				super.dataProvider = value;
-				selectedIndex = 0;
 			}
 
 			
@@ -160,6 +163,11 @@
 			[Bindable]
 			public function get idField():String
 			{
+				if(!_idField)
+				{
+					_idField = "id";
+				}
+				
 				return _idField;
 			}
 

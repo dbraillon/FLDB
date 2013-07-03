@@ -8,22 +8,20 @@
 		 mouseOver="myTileGroupItem_mouseOverHandler(event)"
 		 mouseOut="myTileGroupItem_mouseOutHandler(event)">
 	
-	<fx:Declarations>
-		<!-- Placer ici les éléments non visuels (services et objets de valeur, par exemple). -->
-	</fx:Declarations>
-	
 	<s:states>
 		<s:State name="normal" />
 		<s:State name="over" />
 		<s:State name="selected" />
 	</s:states>
 	
+	<!-- Highlight component -->
 	<s:Rect height="100%" width="100%" depth="2" includeIn="over, selected">
 		<s:fill>
 			<s:SolidColor color="0x99ccff" alpha.over=".3" alpha.selected=".6" />
 		</s:fill>
 	</s:Rect>
 	
+	<!-- Item -->
 	<s:VGroup id="content" height="100%" width="100%" gap="5" depth="1"
 			  paddingBottom="2" paddingLeft="2" paddingRight="2" paddingTop="2"
 			  verticalAlign="middle" horizontalAlign="center">
@@ -41,28 +39,57 @@
 			private var _label:String;
 			private var _provider:Object;
 			
-			protected function myTileGroupItem_mouseOverHandler(event:MouseEvent):void
+			/* Highlight the component or return it to normal */
+			public function highlight(active:Boolean):void
 			{
-				if(currentState == "normal")
+				if(active)
 				{
-					currentState = "over";
+					if(currentState == "normal")
+					{
+						currentState = "over";
+					}
+				}
+				else
+				{
+					if(currentState == "over")
+					{
+						currentState = "normal";
+					}
 				}
 			}
 			
-			protected function myTileGroupItem_mouseOutHandler(event:MouseEvent):void
+			/* Select the component or return it to normal */
+			public function select(active:Boolean):void
 			{
-				if(currentState == "over")
+				if(active)
+				{
+					currentState = "selected";
+				}
+				else
 				{
 					currentState = "normal";
 				}
 			}
 			
+			
+			/* Highlight the component if the mouse is over it */
+			protected function myTileGroupItem_mouseOverHandler(event:MouseEvent):void
+			{
+				highlight(true);
+			}
+			
+			/* Return in normal state if the mouse leave the component */
+			protected function myTileGroupItem_mouseOutHandler(event:MouseEvent):void
+			{
+				highlight(false);
+			}
+			
+
 			public override function set height(value:Number):void
 			{
 				if(value < 64)
 				{
 					return;
-					//throw new Error("You can't give a height less than 64.");
 				}
 				
 				super.height = value;
@@ -73,40 +100,12 @@
 				if(value < 64)
 				{
 					return;
-					//throw new Error("You can't give a width less than 64.");
 				}
 				
 				super.width = value;
 			}
-			
-			public override function setFocus():void
-			{
-				super.setFocus();
-				
-				if(currentState == "normal")
-				{
-					currentState = "over";
-				}
-			}
-			
-			public function looseFocus():void
-			{
-				if(currentState == "over")
-				{
-					currentState = "normal";
-				}
-			}
-			
-			public function select():void
-			{
-				currentState = "selected";
-			}
-			
-			public function deselect():void
-			{
-				currentState = "normal";
-			}
 
+			
 			[Inspectable]
 			public function set source(value:String):void
 			{

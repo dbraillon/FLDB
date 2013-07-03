@@ -4,10 +4,12 @@
     <classEntry path="com.dbraillon.my.myTreeGroup.MyTreeGroup"/>
     <classEntry path="com.dbraillon.my.myExplorer.MyExplorer"/>
     <classEntry path="com.dbraillon.my.myButtonBar.MyButtonBar"/>
-    <classEntry path="com.dbraillon.my.myTreeGroup.MyTreeGroupEvent"/>
+    <classEntry path="com.dbraillon.my.myTreeGroup.MyDetailListEvent"/>
     <classEntry path="com.dbraillon.my.myInputPopup.MyInputPopupEvent"/>
     <classEntry path="com.dbraillon.my.myExplorer.MyExplorerEvent"/>
     <classEntry path="com.dbraillon.my.MyFlexLibrary"/>
+    <classEntry path="com.dbraillon.my.IconManager"/>
+    <classEntry path="com.dbraillon.my.myDetailList.MyDetailList"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>
