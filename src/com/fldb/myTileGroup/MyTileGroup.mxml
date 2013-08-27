@@ -9,10 +9,10 @@
 		
 		// Basic events
 		[Event(name="change", type="flash.events.Event")]
-		[Event(name="myTileGroupDoubleClick", type="com.dbraillon.my.myTileGroup.MyTileGroupEvent")]
+		[Event(name="myTileGroupDoubleClick", type="com.fldb.myTileGroup.MyTileGroupEvent")]
 		
 		// Drag'n'drop
-		[Event(name="myTileGroupDragDrop", type="com.dbraillon.my.myTileGroup.MyTileGroupEvent")]
+		[Event(name="myTileGroupDragDrop", type="com.fldb.myTileGroup.MyTileGroupEvent")]
 		
 	</fx:Metadata> 
 	

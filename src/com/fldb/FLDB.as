@@ -1,7 +1,7 @@
-package com.dbraillon.my
+package com.fldb
 {
 	/********************************************************************************************
-	 *  - MyFlexLibrary v1.1 -																	* <br />
+	 *  - FLDB v1.1 -																			* <br />
 	 * 	Library that contains cool stuff														* <br />
 	 * 																							* <br />
 	 * 	- MyInputPopup v1.1 -																	* <br />
@@ -26,5 +26,5 @@ package com.dbraillon.my
 	 * 																							*
 	 *******************************************************************************************/
 	
-	public class MyFlexLibrary { }
+	public class FLDB { }
 }

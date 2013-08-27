@@ -1,4 +1,4 @@
-package com.dbraillon.my.myExplorer
+package com.fldb.myExplorer
 {
 	import flash.events.Event;
 

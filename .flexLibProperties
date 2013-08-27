@@ -1,15 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
   <includeClasses>
-    <classEntry path="com.dbraillon.my.myTreeGroup.MyTreeGroup"/>
-    <classEntry path="com.dbraillon.my.myExplorer.MyExplorer"/>
-    <classEntry path="com.dbraillon.my.myButtonBar.MyButtonBar"/>
     <classEntry path="com.dbraillon.my.myTreeGroup.MyDetailListEvent"/>
-    <classEntry path="com.dbraillon.my.myInputPopup.MyInputPopupEvent"/>
-    <classEntry path="com.dbraillon.my.myExplorer.MyExplorerEvent"/>
-    <classEntry path="com.dbraillon.my.MyFlexLibrary"/>
-    <classEntry path="com.dbraillon.my.IconManager"/>
-    <classEntry path="com.dbraillon.my.myDetailList.MyDetailList"/>
+    <classEntry path="com.fldb.myTileGroup.MyTileGroupItem"/>
+    <classEntry path="com.fldb.myButtonBar.MyButtonBar"/>
+    <classEntry path="com.fldb.myDetailList.MyDetailList"/>
+    <classEntry path="com.fldb.myDetailList.MyDetailListEvent"/>
+    <classEntry path="com.fldb.myInputPopup.MyInputPopupEvent"/>
+    <classEntry path="com.fldb.myExplorer.MyExplorer"/>
+    <classEntry path="com.fldb.myInputPopup.MyInputPopup"/>
+    <classEntry path="com.fldb.myTileGroup.MyTileGroup"/>
+    <classEntry path="com.fldb.myTileGroup.MyTileGroupEvent"/>
+    <classEntry path="com.fldb.IconManager"/>
+    <classEntry path="com.fldb.myTreeGroup.MyTreeGroupEvent"/>
+    <classEntry path="com.fldb.FLDB"/>
+    <classEntry path="com.fldb.myExplorer.MyExplorerEvent"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

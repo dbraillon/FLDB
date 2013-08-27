@@ -1,4 +1,4 @@
-package com.dbraillon.my.myInputPopup
+package com.fldb.myInputPopup
 {
 	import flash.events.Event;
 	

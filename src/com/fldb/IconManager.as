@@ -1,4 +1,4 @@
-package com.dbraillon.my
+package com.fldb
 {
 	public class IconManager
 	{

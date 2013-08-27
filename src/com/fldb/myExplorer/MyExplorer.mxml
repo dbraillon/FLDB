@@ -2,20 +2,20 @@
 <s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
 		 xmlns:s="library://ns.adobe.com/flex/spark" 
 		 xmlns:mx="library://ns.adobe.com/flex/mx"
-		 xmlns:myButtonBar="com.dbraillon.my.myButtonBar.*"
-		 xmlns:myTreeGroup="com.dbraillon.my.myTreeGroup.*"
-		 xmlns:myTileGroup="com.dbraillon.my.myTileGroup.*" 
-		 xmlns:myDetailList="com.dbraillon.my.myDetailList.*"
+		 xmlns:myButtonBar="com.fldb.myButtonBar.*"
+		 xmlns:myTreeGroup="com.fldb.myTreeGroup.*"
+		 xmlns:myTileGroup="com.fldb.myTileGroup.*" 
+		 xmlns:myDetailList="com.fldb.myDetailList.*"
 		 width="400" height="300"
 		 creationComplete="buildContextMenu()">
 	
 	<fx:Metadata>
 		
-		[Event(name="sendFile", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
-		[Event(name="createFolder", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
-		[Event(name="rename", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
-		[Event(name="delete", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
-		[Event(name="moveItem", type="com.dbraillon.my.myExplorer.MyExplorerEvent")]
+		[Event(name="sendFile", type="com.fldb.myExplorer.MyExplorerEvent")]
+		[Event(name="createFolder", type="com.fldb.myExplorer.MyExplorerEvent")]
+		[Event(name="rename", type="com.fldb.myExplorer.MyExplorerEvent")]
+		[Event(name="delete", type="com.fldb.myExplorer.MyExplorerEvent")]
+		[Event(name="moveItem", type="com.fldb.myExplorer.MyExplorerEvent")]
 		
 	</fx:Metadata>
 	
@@ -83,11 +83,11 @@
 	
 	<fx:Script>
 		<![CDATA[
-			import com.dbraillon.my.myDetailList.MyDetailListEvent;
-			import com.dbraillon.my.myInputPopup.MyInputPopup;
-			import com.dbraillon.my.myInputPopup.MyInputPopupEvent;
-			import com.dbraillon.my.myTileGroup.MyTileGroupEvent;
-			import com.dbraillon.my.myTreeGroup.MyTreeGroupEvent;
+			import com.fldb.myDetailList.MyDetailListEvent;
+			import com.fldb.myInputPopup.MyInputPopup;
+			import com.fldb.myInputPopup.MyInputPopupEvent;
+			import com.fldb.myTileGroup.MyTileGroupEvent;
+			import com.fldb.myTreeGroup.MyTreeGroupEvent;
 			
 			import flash.globalization.DateTimeFormatter;
 			

@@ -1,4 +1,4 @@
-package com.dbraillon.my.myDetailList
+package com.fldb.myDetailList
 {
 	import flash.events.Event;
 	

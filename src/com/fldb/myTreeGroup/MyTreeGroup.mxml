@@ -17,7 +17,7 @@
 	-->
 	
 	<fx:Metadata>
-		[Event(name="myTreeGroupDragDrop", type="com.dbraillon.my.myTreeGroup.MyTreeGroupEvent")]
+		[Event(name="myTreeGroupDragDrop", type="com.fldb.myTreeGroup.MyTreeGroupEvent")]
 	</fx:Metadata>
 	
 	<mx:rendererProviders>
@@ -32,8 +32,10 @@
 						
 						<fx:Script>
 							<![CDATA[
-								import com.dbraillon.my.myTileGroup.MyTileGroup;
-								import com.dbraillon.my.myTreeGroup.MyTreeGroupEvent;
+								import mx.events.DragEvent;
+								import mx.managers.DragManager;
+								import com.fldb.myTreeGroup.MyTreeGroupEvent;
+								import spark.components.List;
 								
 								import mx.events.DragEvent;
 								import mx.managers.DragManager;
@@ -85,6 +87,8 @@
 	<fx:Script>
 		<![CDATA[
 			import mx.events.FlexEvent;
+			import mx.events.FlexEvent;
+			
 			
 			private var _dataHeaderField:String;
 			private var _dataField:String;

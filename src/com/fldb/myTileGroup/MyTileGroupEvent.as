@@ -1,4 +1,4 @@
-package com.dbraillon.my.myTileGroup
+package com.fldb.myTileGroup
 {
 	import flash.events.Event;
 	
